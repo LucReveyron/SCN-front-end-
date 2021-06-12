@@ -3,7 +3,8 @@
     <div id="nav">
       <router-link to="/">Network status</router-link> |
       <router-link to="/about">Video</router-link> |
-      <router-link to="/connection">Presence</router-link>
+      <router-link to="/connection">Presence</router-link> |
+      <router-link to="/newperson">New Person</router-link>
     </div>
     <router-view/>
   </div>
