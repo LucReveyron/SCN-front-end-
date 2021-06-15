@@ -1,42 +1,63 @@
 <template>
     <div>
-        <div class="camera">
-            <video id="video">Video stream not available.</video>
-            <button id="startbutton">Take photo</button> 
+        <div >
+            <button @click="loginType = !loginType; sendUser()">
+                Enter
+            </button>
         </div>
-        <canvas id="canvas">
-        </canvas>
-        <div class="output">
-            <img id="photo" alt="The screen capture will appear in this box."> 
-        </div>
+        <ul>
+        </ul>
+        <template v-if="loginType === true">
+            <label>Username</label>
+            <input v-model="name" placeholder="Enter your username" key="username-input">
+        </template>
+        <template v-else>
+            <p>Hello {{ name }}</p>
+            <ul>
+            </ul>
+            <div class="camera">
+                <video id="video">Video stream not available.</video>
+                <button id="startbutton" @click="sendPicture()">Take photo</button> 
+            </div>
+            <canvas id="canvas">
+            </canvas>
+            <div class="output">
+                <img id="photo" alt="The screen capture will appear in this box."> 
+            </div>
+        </template>
     </div>
 </template>
 
 <script>
-
+import axios from 'axios';
 export default {
   name: 'TakePicture',
   data() {
     return {
-      ws: '',
+      loginType: true,
+      name: "",
+      picture: null
     };
   },
   methods: {
-    connection() {
-        this.ws = new WebSocket('ws://localhost:9999/ws/picture');
-        var vm = this;
+    sendUser(){
+        if(this.loginType === false){
+            console.log("send user");
+            axios.post('http://localhost:9999/username', {user: this.name})
+            .then(response => (console.log(response.url)));
+        }
 
-        setTimeout(function(){
-            vm.ws.send('1');
-            vm.ws.onmessage = function(event){
-                console.log(event.data);
-
-                vm.ws.send('1');
-        }},500);
+    },
+    sendPicture(){
+        console.log("send picture");
+        console.log(typeof this.picture);
+        // now upload
+        axios.post('http://localhost:9999/picture', {url: this.picture}).then(response => {
+            console.log(response.data)
+        });
     },
     takepicture() {
         //Mostly take from : https://github.com/mdn/samples-server/blob/master/s/webrtc-capturestill/capture.js
-        (function() {
             // The width and height of the captured photo. We will set the
             // width to the value defined here, but the height will be
             // calculated based on the aspect ratio of the input stream.
@@ -56,9 +77,9 @@ export default {
             var canvas = null;
             var photo = null;
             var startbutton = null;
-            var MediaStream = null;
 
             function startup() {
+                console.log("in!!!!")
 
                 video = document.getElementById('video');
                 canvas = document.getElementById('canvas');
@@ -118,7 +139,7 @@ export default {
             // format data URL. By drawing it on an offscreen canvas and then
             // drawing that to the screen, we can change its size and/or apply
             // other changes before drawing it.
-
+            var vm = this;
             function takepicture() {
                 var context = canvas.getContext('2d');
                 if (width && height) {
@@ -128,16 +149,22 @@ export default {
                 
                 var data = canvas.toDataURL('image/png');
                 photo.setAttribute('src', data);
+                vm.picture = data;
                 } else {
                 clearphoto();
                 }
             }
             function stopWebcam(){
                 console.log("Stop webcam");
-                MediaStream = stream.getTracks()[0]; // create the stream tracker
-                MediaStream.stop()
-            }
+                const stream = video.srcObject;
+                const tracks = stream.getTracks();
 
+                tracks.forEach(function(track) {
+                    track.stop();
+                });
+                video = null;
+                canvas = null;
+            }
             // Set up our event listener to run the startup process
             // once loading is complete.
             //window.addEventListener('keydown', startup(e), false);
@@ -149,12 +176,9 @@ export default {
                     stopWebcam();
                 }
             });
-            //window.addEventListener("onhashchange",stopWebcam, false);
-        })();
     },
   },
   mounted() {
-    //this.connection();
     this.takepicture();
   }
 };
@@ -208,4 +232,5 @@ export default {
   font-family: "Lucida Grande", "Arial", sans-serif;
   width: 760px;
 }
+
 </style>

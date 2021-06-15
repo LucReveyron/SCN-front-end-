@@ -15,6 +15,7 @@ export default {
     data() {
     return {
         nameDict: {},
+        intervalID: null
     };
     },
     methods: {
@@ -30,7 +31,7 @@ export default {
             });
         },
         intervalFetchData: function () {
-            setInterval(() => {    
+            this.intervalID = setInterval(() => {    
                 this.getMessage();
             }, 2000);    
         }
@@ -40,5 +41,9 @@ export default {
         //Run the intervalFetchData function once to set the interval time for later refresh
         this.intervalFetchData();
   },
+  beforeDestroy(){
+      console.log('clear intevral');
+      clearInterval(this.intervalID);
+  }
 };
 </script>
